@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Springer Citation Downloader",
+  "version": "1.0",
+  "description": "批量下载Springer论文引用",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://link.springer.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [{
+    "matches": ["https://link.springer.com/*"],
+    "js": ["content.js"]
+  }],
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
