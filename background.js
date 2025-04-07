@@ -6,12 +6,18 @@ let tasks = {
   tabId: null,
   currentTabId: null,
   isRunning: false,
-  processedUrls: new Set()
+  processedUrls: new Set(),
+  nextPageUrl: null
 };
 
 // 监听来自popup的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'startDownload') {
+  if (message.action === 'nextPageFound') {
+    if (!tasks.isRunning) return;
+    console.log('发现下一页:', message.url);
+    // 当前页面的链接处理完成后，跳转到下一页
+    tasks.nextPageUrl = message.url;
+  } else if (message.action === 'startDownload') {
     if (tasks.isRunning) {
       console.warn('已有下载任务正在运行');
       return;
@@ -65,13 +71,38 @@ async function stopDownload() {
   tasks.total = 0;
   tasks.current = 0;
   tasks.currentTabId = null;
+  tasks.nextPageUrl = null;
   tasks.processedUrls.clear();
 }
 
 // 处理下一个链接
 async function processNextUrl() {
   if (tasks.current >= tasks.total) {
-    console.log('所有链接处理完成');
+    if (tasks.nextPageUrl) {
+      console.log('当前页面处理完成，跳转到下一页:', tasks.nextPageUrl);
+      const nextPageTab = await chrome.tabs.create({ url: tasks.nextPageUrl, active: false });
+      tasks.tabId = nextPageTab.id;
+      tasks.nextPageUrl = null;
+      tasks.urls = [];
+      tasks.total = 0;
+      tasks.current = 0;
+      
+      // 等待页面加载完成
+      await new Promise(resolve => {
+        chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+          if (tabId === nextPageTab.id && info.status === 'complete') {
+            chrome.tabs.onUpdated.removeListener(listener);
+            resolve();
+          }
+        });
+      });
+      
+      // 收集新页面的链接
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      chrome.tabs.sendMessage(nextPageTab.id, { action: 'collectLinks' });
+      return;
+    }
+    console.log('所有页面处理完成');
     chrome.runtime.sendMessage({ type: 'complete' });
     stopDownload();
     return;

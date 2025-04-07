@@ -35,6 +35,16 @@ async function collectLinks() {
     }
 
     await chrome.runtime.sendMessage({ action: 'linksCollected', urls: uniqueLinks });
+
+    // 获取下一页链接
+    const nextPageButton = await waitForElement('a[data-test="next-page"]', 2000).catch(() => null);
+    if (nextPageButton && !nextPageButton.classList.contains('disabled')) {
+      const nextPageUrl = nextPageButton.href;
+      if (nextPageUrl) {
+        await chrome.runtime.sendMessage({ action: 'nextPageFound', url: nextPageUrl });
+      }
+    }
+
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -57,7 +67,8 @@ async function downloadCitation() {
       '.c-citation-download__button',
       '.c-article-references a[data-test="citation-link"]',
       'button[data-track-action^="download citation"]',
-      'button[data-track-action^="download chapter citation"]'
+      'button[data-track-action^="download chapter citation"]',
+      'a[data-track-action="download article citation"]'
     ];
 
     let downloadButton;
