@@ -4,9 +4,9 @@
   "version": "1.0",
   "description": "批量下载Springer论文引用",
   "permissions": [
-    "activeTab",
-    "scripting",
+    "tabs",
     "downloads",
+    "scripting",
     "storage"
   ],
   "host_permissions": [
