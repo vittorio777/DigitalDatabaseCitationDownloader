@@ -1,4 +1,4 @@
-# Springer Citation Downloader
+# DigitalDatabaseCitationDownloader
 
 一个用于下载 Springer 文献引用信息的 Chrome 浏览器扩展。
 
